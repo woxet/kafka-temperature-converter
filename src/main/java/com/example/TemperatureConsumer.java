@@ -1,7 +1,5 @@
 package com.example;
 
-import io.smallrye.reactive.messaging.annotations.Channel;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -10,11 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @ApplicationScoped
 public class TemperatureConsumer {
 
-    private ConcurrentLinkedQueue<Integer> temperatureQueue = new ConcurrentLinkedQueue<>();
-
-    @Inject
-    @Channel("temperature-fahrenheit")
-    org.eclipse.microprofile.reactive.messaging.Message<Integer> message;
+    private final ConcurrentLinkedQueue<Integer> temperatureQueue = new ConcurrentLinkedQueue<>();
 
     @Incoming("temperature-fahrenheit")
     public void consumeTemperature(Integer temperature) {

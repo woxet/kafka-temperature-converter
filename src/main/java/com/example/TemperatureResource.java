@@ -1,7 +1,5 @@
 package com.example;
 
-import com.example.TemperatureConsumer;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

@@ -1,20 +1,23 @@
 package com.example;
 
 import io.quarkus.runtime.StartupEvent;
+import javax.inject.Inject;
+
+import io.smallrye.reactive.messaging.annotations.Blocking;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
-import javax.inject.Inject;
 import java.util.Properties;
 
 @ApplicationScoped
 public class TemperatureProcessor {
 
-    @Inject
     StreamsBuilder streamsBuilder;
 
     public void onStart(@Observes StartupEvent event) {

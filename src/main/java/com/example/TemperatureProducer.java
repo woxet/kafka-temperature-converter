@@ -1,34 +1,48 @@
 package com.example;
 
-import io.quarkus.runtime.StartupEvent;
-import io.smallrye.reactive.messaging.annotations.Emitter;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import io.quarkus.scheduler.Scheduled;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.util.Properties;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class TemperatureProducer {
 
-    @Inject
-    @Channel("generated-temperature")
-    Emitter<Integer> temperatureEmitter;
+    private final Producer<String, String> kafkaProducer;
+    private final Random random = new Random();
 
-    private Random random = new Random();
+    KafkaProducerConfig kafkaProducerConfig;
 
-    void onStart(@Observes StartupEvent ev) {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(this::generateTemperature, 0, 5, TimeUnit.SECONDS);
+    public TemperatureProducer() {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", kafkaProducerConfig.getBootstrapServers());
+        props.put("key.serializer", kafkaProducerConfig.getKeySerializer());
+        props.put("value.serializer", kafkaProducerConfig.getValueSerializer());
+
+        kafkaProducer = new KafkaProducer<>(props);
     }
 
-    @Outgoing("generated-temperature")
-    public Integer generateTemperature() {
-        return random.nextInt(40); // Génère une température entre 0 et 40 degrés Celsius
+    @Scheduled(every = "5s")
+    void sendTemperature() {
+        int temperature = random.nextInt(40); // Génère une température aléatoire entre 0 et 40 degrés Celsius
+        String messageKey = "temperature";
+        String messageValue = "{\"celsius\": " + temperature + "}";
+
+        kafkaProducer.send(new ProducerRecord<>("temperature-celsius-topic", messageKey, messageValue),
+                (metadata, exception) -> {
+                    if (exception != null) {
+                        System.err.println("Error sending message: " + exception.getMessage());
+                    } else {
+                        System.out.println("Sent temperature: " + temperature);
+                    }
+                });
+    }
+
+    public void close() {
+        kafkaProducer.close();
     }
 }
