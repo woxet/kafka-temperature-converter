@@ -1,3 +1,5 @@
+package com.example;
+
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.reactive.messaging.annotations.Emitter;
 import jakarta.enterprise.event.Observes;

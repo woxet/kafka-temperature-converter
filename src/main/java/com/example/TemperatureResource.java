@@ -1,3 +1,5 @@
+package com.example;
+
 import com.example.TemperatureConsumer;
 
 import javax.inject.Inject;
