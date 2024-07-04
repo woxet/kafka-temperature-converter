@@ -1,32 +1,28 @@
 package com.example;
 
+import io.smallrye.reactive.messaging.annotations.Channel;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @ApplicationScoped
-@Path("/temperature")
 public class TemperatureConsumer {
 
-    private List<Integer> temperatures = new LinkedList<>();
+    private ConcurrentLinkedQueue<Integer> temperatureQueue = new ConcurrentLinkedQueue<>();
 
-    @Incoming("fahrenheit")
-    public void consume(int tempFahrenheit) {
-        if (temperatures.size() >= 10) {
-            temperatures.remove(0);
-        }
-        temperatures.add(tempFahrenheit);
+    @Inject
+    @Channel("temperature-fahrenheit")
+    org.eclipse.microprofile.reactive.messaging.Message<Integer> message;
+
+    @Incoming("temperature-fahrenheit")
+    public void consumeTemperature(Integer temperature) {
+        temperatureQueue.offer(temperature);
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<Integer> getTemperatures() {
-        return temperatures;
+    public String getLatestTemperature() {
+        Integer latestTemperature = temperatureQueue.peek();
+        return latestTemperature != null ? latestTemperature.toString() : "No temperature data available";
     }
 }

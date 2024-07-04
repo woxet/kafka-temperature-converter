@@ -1,29 +1,32 @@
-package com.example;
-
-import io.smallrye.reactive.messaging.annotations.Channel;
+import io.quarkus.runtime.StartupEvent;
 import io.smallrye.reactive.messaging.annotations.Emitter;
-import io.vertx.mutiny.core.Vertx;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class TemperatureProducer {
 
     @Inject
-    @Channel("celsius")
-    Emitter<Integer> emitter;
+    @Channel("generated-temperature")
+    Emitter<Integer> temperatureEmitter;
 
-    @Inject
-    Vertx vertx;
+    private Random random = new Random();
 
-    Random random = new Random();
+    void onStart(@Observes StartupEvent ev) {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(this::generateTemperature, 0, 5, TimeUnit.SECONDS);
+    }
 
-    public void generate() {
-        vertx.setPeriodic(5000, id -> {
-            int tempCelsius = random.nextInt(40); // Génère une température aléatoire en Celsius
-            emitter.send(tempCelsius);
-        });
+    @Outgoing("generated-temperature")
+    public Integer generateTemperature() {
+        return random.nextInt(40); // Génère une température entre 0 et 40 degrés Celsius
     }
 }
